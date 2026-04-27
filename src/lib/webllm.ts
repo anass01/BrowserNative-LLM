@@ -52,24 +52,15 @@ export async function loadModel(
 
   engine = await CreateMLCEngine(modelId, {
     initProgressCallback: (report) => {
-      if (signal?.aborted) return;
       const p = report.progress ?? 0;
       const elapsed = (Date.now() - startTime) / 1000;
-      let text = report.text ?? "Loading…";
-      const isCached = text.toLowerCase().includes("cache");
 
-      if (p === 1) {
-        text = "🎉 Your AI is ready!";
-      } else if (p < 0.05) {
-        text = "Preparing your AI…";
-      } else if (isCached) {
-        if (p < 0.9) text = "Loading model from cache…";
-        else text = "Almost ready!";
-      } else {
-        if (p < 0.5) text = "Downloading model… (this happens once)";
-        else if (p < 0.9) text = "Loading weights into memory…";
-        else text = "Almost ready!";
-      }
+      let text = report.text ?? "Loading…";
+      
+      // Pass the WebLLM native progress strings directly to UI, as they contain 
+      // granular metrics (e.g., "Loading model from cache[25/58]: 830MB loaded")
+      if (p === 1) text = "🎉 Your AI is ready!";
+      
       onProgress({ progress: p, text, timeElapsed: elapsed });
     },
   });

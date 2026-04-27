@@ -7,6 +7,7 @@
  */
 "use client";
 
+import { useState } from "react";
 import { useWebLLM } from "@/hooks/useWebLLM";
 import { useChat } from "@/hooks/useChat";
 import { Sidebar } from "@/components/Sidebar";
@@ -33,18 +34,21 @@ export default function HomePage() {
     clearChat,
   } = useChat(engineStatus);
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const handleNewChat = () => {
     clearChat();
+    setMobileMenuOpen(false);
   };
 
   const handleSelectModel = (id: string) => {
     selectModel(id);
-    // Clear chat when switching models
     clearChat();
+    setMobileMenuOpen(false);
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0d0d0f]">
+    <div className="flex h-[100dvh] overflow-hidden bg-[#0d0d0f]">
       {/* Left Sidebar */}
       <Sidebar
         models={models}
@@ -52,9 +56,14 @@ export default function HomePage() {
         onSelectModel={handleSelectModel}
         onLoadModel={() => loadModel()}
         onNewChat={handleNewChat}
-        onClearChat={clearChat}
+        onClearChat={() => {
+          clearChat();
+          setMobileMenuOpen(false);
+        }}
         engineStatus={engineStatus}
         hasMessages={messages.length > 0}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
       {/* Main Chat Area */}
@@ -70,6 +79,7 @@ export default function HomePage() {
         onLoadModel={() => loadModel()}
         onCancelLoad={cancelLoad}
         onRetryLoad={() => loadModel()}
+        onOpenMobileMenu={() => setMobileMenuOpen(true)}
       />
 
       {/* Right Ad Sidebar */}

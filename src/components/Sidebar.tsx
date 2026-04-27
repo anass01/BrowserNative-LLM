@@ -5,7 +5,7 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, Plus, MessageSquare, ChevronLeft, ChevronRight, Trash2, Cpu } from "lucide-react";
+import { Shield, Plus, MessageSquare, ChevronLeft, ChevronRight, Trash2, Cpu, X } from "lucide-react";
 import { ModelSelector } from "./ModelSelector";
 import type { WebLLMModel } from "@/lib/webllm";
 import type { EngineStatus } from "@/lib/webllm";
@@ -19,6 +19,8 @@ interface SidebarProps {
   onClearChat: () => void;
   engineStatus: EngineStatus;
   hasMessages: boolean;
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
 }
 
 export function Sidebar({
@@ -30,6 +32,8 @@ export function Sidebar({
   onClearChat,
   engineStatus,
   hasMessages,
+  mobileOpen,
+  onCloseMobile,
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -37,30 +41,53 @@ export function Sidebar({
   const isReady = engineStatus === "ready";
 
   return (
-    <aside
-      className={`
-        relative shrink-0 h-full flex flex-col
-        bg-[#111113] border-r border-[#1e1e22]
-        transition-all duration-300 ease-in-out
-        ${collapsed ? "w-14" : "w-64"}
-      `}
-      aria-label="Sidebar"
-    >
-      {/* Collapse toggle */}
-      <button
-        id="sidebar-collapse-btn"
-        onClick={() => setCollapsed((c) => !c)}
-        className="absolute -right-3 top-8 z-10 w-6 h-6 rounded-full
-          bg-[#27272a] border border-[#3f3f46] text-[#71717a]
-          flex items-center justify-center
-          hover:bg-[#3f3f46] hover:text-[#f0f0f2]
-          transition-all duration-150 shadow-md"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
-      </button>
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-20 md:hidden backdrop-blur-sm"
+          onClick={onCloseMobile}
+          aria-hidden="true"
+        />
+      )}
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <aside
+        className={`
+          fixed md:relative z-30 shrink-0 h-[100dvh] flex flex-col
+          bg-[#111113] border-r border-[#1e1e22]
+          transition-all duration-300 ease-in-out
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          ${collapsed ? "md:w-14 w-64" : "w-64"}
+        `}
+        aria-label="Sidebar"
+      >
+        {/* Mobile Close Toggle */}
+        <button
+          onClick={onCloseMobile}
+          className="md:hidden absolute right-3 top-4 z-40 w-8 h-8 rounded-lg
+            bg-[#1a1a1e] border border-[#27272a] text-[#71717a]
+            flex items-center justify-center
+            hover:bg-[#27272a] hover:text-[#f0f0f2]"
+          aria-label="Close sidebar"
+        >
+          <X size={16} />
+        </button>
+
+        {/* Desktop Collapse Toggle */}
+        <button
+          id="sidebar-collapse-btn"
+          onClick={() => setCollapsed((c) => !c)}
+          className="hidden md:flex absolute -right-3 top-8 z-40 w-6 h-6 rounded-full
+            bg-[#27272a] border border-[#3f3f46] text-[#71717a]
+            items-center justify-center
+            hover:bg-[#3f3f46] hover:text-[#f0f0f2]
+            transition-all duration-150 shadow-md"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        </button>
+
+        <div className="flex-1 flex flex-col overflow-hidden">
         {/* Logo / Brand */}
         <div className={`flex items-center gap-2.5 px-4 py-5 border-b border-[#1e1e22] ${collapsed ? "justify-center px-2" : ""}`}>
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#6366f1] to-[#4f46e5]
@@ -179,6 +206,7 @@ export function Sidebar({
           </div>
         )}
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

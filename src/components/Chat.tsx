@@ -9,6 +9,7 @@ import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { DownloadProgress } from "./DownloadProgress";
 import { WelcomeScreen } from "./WelcomeScreen";
+import { Menu } from "lucide-react";
 import type { Message } from "@/hooks/useChat";
 import type { EngineStatus, ProgressUpdate } from "@/lib/webllm";
 
@@ -24,6 +25,7 @@ interface ChatProps {
   onLoadModel: () => void;
   onCancelLoad: () => void;
   onRetryLoad: () => void;
+  onOpenMobileMenu: () => void;
 }
 
 function formatModelName(id: string) {
@@ -42,6 +44,7 @@ export function Chat({
   onLoadModel,
   onCancelLoad,
   onRetryLoad,
+  onOpenMobileMenu,
 }: ChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -56,7 +59,15 @@ export function Chat({
   const hasMessages = messages.length > 0;
 
   return (
-    <main className="flex flex-col flex-1 overflow-hidden">
+    <main className="flex flex-col flex-1 overflow-hidden relative">
+      {/* Mobile Menu Toggle */}
+      <button
+        onClick={onOpenMobileMenu}
+        className="md:hidden absolute top-3 left-4 z-20 p-2 rounded-lg bg-[#111113] border border-[#1e1e22] text-[#f0f0f2] shadow-sm"
+        aria-label="Open menu"
+      >
+        <Menu size={18} />
+      </button>
       {/* Status bar */}
       {isReady && (
         <div className="shrink-0 flex items-center justify-center gap-2 py-2 border-b border-[#1e1e22]">
