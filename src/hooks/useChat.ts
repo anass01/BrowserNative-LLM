@@ -64,49 +64,54 @@ export function useChat(engineStatus: EngineStatus): UseChatReturn {
     const abort = new AbortController();
     abortRef.current = abort;
 
-    try {
-      const { streamChat } = await import("@/lib/webllm");
+    // Yield the main thread to React first so the UI instantly shows the chat bubble.
+    // Otherwise, WebLLM's heavy WebGPU prefill mathematics will synchronously lock the thread
+    // before the DOM has a chance to visually re-render on weaker mobile devices.
+    setTimeout(async () => {
+      try {
+        const { streamChat } = await import("@/lib/webllm");
 
-      const systemPrompt = "You are Vynox AI, an advanced AI running entirely locally in the user's browser. You operate completely offline, meaning the user's privacy is 100% guaranteed. You are exceptionally concise, helpful, and knowledgeable. When asked who you are, remind the user that you are running directly on their device hardware.";
+        const systemPrompt = "You are Vynox AI, an advanced AI running entirely locally in the user's browser. You operate completely offline, meaning the user's privacy is 100% guaranteed. You are exceptionally concise, helpful, and knowledgeable. When asked who you are, remind the user that you are running directly on their device hardware.";
 
-      // Build conversation context using latest messages ref and prepend system prompt
-      const history = [
-        { role: "system" as const, content: systemPrompt },
-        ...messagesRef.current.map((m) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })), 
-        { role: "user" as const, content: userMessage.content }
-      ];
+        // Build conversation context using latest messages ref and prepend system prompt
+        const history = [
+          { role: "system" as const, content: systemPrompt },
+          ...messagesRef.current.map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          })), 
+          { role: "user" as const, content: userMessage.content }
+        ];
 
-      await streamChat(
-        history,
-        (content, _done) => {
-          if (abort.signal.aborted) return;
+        await streamChat(
+          history,
+          (content, _done) => {
+            if (abort.signal.aborted) return;
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMessage.id
+                  ? { ...m, content: m.content + content }
+                  : m
+              )
+            );
+          },
+          abort.signal
+        );
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantMessage.id
-                ? { ...m, content: m.content + content }
+                ? { ...m, content: "_Error: Could not generate response. Please try again._" }
                 : m
             )
           );
-        },
-        abort.signal
-      );
-    } catch (err) {
-      if ((err as Error).name !== "AbortError") {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantMessage.id
-              ? { ...m, content: "_Error: Could not generate response. Please try again._" }
-              : m
-          )
-        );
+        }
+      } finally {
+        setIsGenerating(false);
+        abortRef.current = null;
       }
-    } finally {
-      setIsGenerating(false);
-      abortRef.current = null;
-    }
+    }, 50);
   }, [engineStatus]);
 
   const stopGeneration = useCallback(() => {
