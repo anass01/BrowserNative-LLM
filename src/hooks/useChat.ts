@@ -79,7 +79,7 @@ export function useChat(engineStatus: EngineStatus): UseChatReturn {
           ...messagesRef.current.map((m) => ({
             role: m.role as "user" | "assistant",
             content: m.content,
-          })), 
+          })),
           { role: "user" as const, content: userMessage.content }
         ];
 
@@ -111,7 +111,7 @@ export function useChat(engineStatus: EngineStatus): UseChatReturn {
         setIsGenerating(false);
         abortRef.current = null;
       }
-    }, 50);
+    }, 100);
   }, [engineStatus]);
 
   const stopGeneration = useCallback(() => {

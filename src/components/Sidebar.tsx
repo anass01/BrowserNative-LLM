@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { Shield, Plus, MessageSquare, ChevronLeft, ChevronRight, Trash2, Cpu, X } from "lucide-react";
 import { ModelSelector } from "./ModelSelector";
+import { InstallButton } from "./InstallButton";
 import type { WebLLMModel } from "@/lib/webllm";
 import type { EngineStatus } from "@/lib/webllm";
 
@@ -178,6 +179,8 @@ export function Sidebar({
 
         {/* Spacer */}
         <div className="flex-1" />
+
+        <InstallButton collapsed={collapsed} />
 
         {/* Privacy note */}
         {!collapsed && (

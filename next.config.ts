@@ -4,7 +4,7 @@ import withSerwistInit from "@serwist/next";
 const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
-  disable: process.env.NODE_ENV === "development", // Don't run SW aggressively in dev
+  disable: false, // Enabled for local dev so the Install Button actually appears
 });
 
 const nextConfig: NextConfig = {
