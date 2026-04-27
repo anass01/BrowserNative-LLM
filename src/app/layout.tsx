@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   description:
     "Chat with powerful AI models privately. Everything runs locally in your browser — no accounts, no tracking, no data collection.",
   keywords: ["local AI", "private chat", "WebLLM", "offline AI", "browser AI"],
+  manifest: "/manifest.json",
   openGraph: {
     title: "PrivateChat — Local AI in Your Browser",
     description: "Chat with AI privately. No data leaves your device.",
@@ -35,6 +36,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      suppressHydrationWarning
     >
       <body className="h-full overflow-hidden antialiased">{children}</body>
     </html>

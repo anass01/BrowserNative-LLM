@@ -38,7 +38,7 @@ export function WelcomeScreen({
 
         <p className="text-[#71717a] text-sm leading-relaxed">
           Chat with powerful LLMs entirely in your browser.
-          No accounts, no tracking, no data collection — ever.
+          No accounts, no tracking, no data collection.
         </p>
       </div>
 
