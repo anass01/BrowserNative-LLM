@@ -20,18 +20,18 @@ export function AdSidebar() {
 
       {/* Ad slot 1 */}
       <AdSlot
-        title="Deploy AI Apps"
-        description="Ship production AI faster with Vercel's edge platform."
-        href="#"
-        tag="Cloud"
+        title="Build with Vynox"
+        description="Ship modern, premium software architectures and pristine UI designs for the web."
+        href="https://www.vynox.tech/"
+        tag="Engineering"
       />
 
       {/* Ad slot 2 */}
       <AdSlot
-        title="Your Ad Here"
-        description="Reach privacy-first AI users. Contact us to advertise."
-        href="#"
-        tag="Advertise"
+        title="Hire Expert Talent"
+        description="Bring your next big idea to life with elite full-stack engineering from Vynox."
+        href="https://www.vynox.tech/"
+        tag="Consulting"
       />
 
       <div className="flex-1" />
