@@ -1,8 +1,19 @@
 @import "tailwindcss";
+@import "highlight.js/styles/github-dark.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0d0d0f;
+  --foreground: #f0f0f2;
+  --sidebar-bg: #111113;
+  --sidebar-border: #1e1e22;
+  --input-bg: #18181c;
+  --user-bubble: #1d4ed8;
+  --assistant-bubble: #1a1a1e;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --muted: #52525b;
+  --border: #27272a;
+  --ring: #6366f133;
 }
 
 @theme inline {
@@ -12,15 +23,131 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* Prose / markdown styles inside chat */
+.prose {
+  color: var(--foreground);
+  max-width: none;
+  line-height: 1.7;
+  font-size: 0.9375rem;
+}
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  color: #f4f4f5;
+  font-weight: 600;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+}
+.prose p { margin: 0.5em 0; }
+.prose ul, .prose ol { padding-left: 1.5em; margin: 0.5em 0; }
+.prose li { margin: 0.25em 0; }
+.prose blockquote {
+  border-left: 3px solid #6366f1;
+  padding-left: 1em;
+  color: #a1a1aa;
+  margin: 0.75em 0;
+}
+.prose a { color: #818cf8; text-decoration: underline; }
+.prose strong { color: #f4f4f5; font-weight: 600; }
+.prose code:not(pre code) {
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  font-size: 0.85em;
+  color: #a5b4fc;
+}
+.prose pre {
+  position: relative;
+  margin: 0.75em 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #27272a;
+}
+.prose pre code {
+  display: block;
+  padding: 1em 1.25em;
+  overflow-x: auto;
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  font-size: 0.85em;
+  line-height: 1.6;
+}
+
+/* Streaming cursor blink */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.cursor-blink::after {
+  content: "▋";
+  display: inline-block;
+  animation: blink 1s step-start infinite;
+  color: #6366f1;
+  margin-left: 1px;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #1a1a1e 25%, #27272a 50%, #1a1a1e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+/* Progress bar animation */
+@keyframes progress-glow {
+  0%, 100% { box-shadow: 0 0 8px #6366f180; }
+  50% { box-shadow: 0 0 16px #6366f1cc; }
+}
+.progress-glow {
+  animation: progress-glow 1.5s ease-in-out infinite;
+}
+
+/* Fade-in for messages */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-slide-up {
+  animation: fadeSlideUp 0.25s ease-out forwards;
 }
