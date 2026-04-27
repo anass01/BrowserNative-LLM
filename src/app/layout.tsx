@@ -15,13 +15,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PrivateChat — Local AI in Your Browser",
+  title: "Vynox AI — Local AI in Your Browser",
   description:
     "Chat with powerful AI models privately. Everything runs locally in your browser — no accounts, no tracking, no data collection.",
   keywords: ["local AI", "private chat", "WebLLM", "offline AI", "browser AI"],
   manifest: "/manifest.json",
   openGraph: {
-    title: "PrivateChat — Local AI in Your Browser",
+    title: "Vynox AI — Local AI in Your Browser",
     description: "Chat with AI privately. No data leaves your device.",
     type: "website",
   },

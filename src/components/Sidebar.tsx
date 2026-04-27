@@ -69,7 +69,7 @@ export function Sidebar({
           </div>
           {!collapsed && (
             <div>
-              <p className="text-sm font-semibold text-[#f0f0f2] leading-tight">PrivateChat</p>
+              <p className="text-sm font-semibold text-[#f0f0f2] leading-tight">Vynox AI</p>
               <p className="text-[10px] text-[#52525b]">Runs in your browser</p>
             </div>
           )}

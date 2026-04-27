@@ -1,6 +1,6 @@
 {
-  "name": "PrivateChat",
-  "short_name": "PrivateChat",
+  "name": "Vynox AI",
+  "short_name": "Vynox AI",
   "description": "Local LLM chat application running entirely locally in your browser via WebLLM.",
   "start_url": "/",
   "display": "standalone",
