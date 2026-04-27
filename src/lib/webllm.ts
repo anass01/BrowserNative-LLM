@@ -56,11 +56,20 @@ export async function loadModel(
       const p = report.progress ?? 0;
       const elapsed = (Date.now() - startTime) / 1000;
       let text = report.text ?? "Loading…";
-      if (p < 0.05) text = "Preparing your AI…";
-      else if (p < 0.5) text = "Downloading model… (this happens once)";
-      else if (p < 0.9) text = "Loading weights into memory…";
-      else if (p < 1) text = "Almost ready!";
-      else text = "🎉 Your AI is ready!";
+      const isCached = text.toLowerCase().includes("cache");
+
+      if (p === 1) {
+        text = "🎉 Your AI is ready!";
+      } else if (p < 0.05) {
+        text = "Preparing your AI…";
+      } else if (isCached) {
+        if (p < 0.9) text = "Loading model from cache…";
+        else text = "Almost ready!";
+      } else {
+        if (p < 0.5) text = "Downloading model… (this happens once)";
+        else if (p < 0.9) text = "Loading weights into memory…";
+        else text = "Almost ready!";
+      }
       onProgress({ progress: p, text, timeElapsed: elapsed });
     },
   });
