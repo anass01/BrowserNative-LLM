@@ -1,15 +1,19 @@
 /**
  * components/Sidebar.tsx
- * Left sidebar: new chat, model selection, chat history, privacy note.
+ * Left sidebar: new chat, model selection, chat history list, privacy note.
  */
 "use client";
 
 import { useState } from "react";
-import { Shield, Plus, MessageSquare, ChevronLeft, ChevronRight, Trash2, Cpu, X } from "lucide-react";
+import {
+  Shield, Plus, MessageSquare, ChevronLeft, ChevronRight,
+  Trash2, Cpu, X, Clock,
+} from "lucide-react";
 import { ModelSelector } from "./ModelSelector";
 import { InstallButton } from "./InstallButton";
 import type { WebLLMModel } from "@/lib/webllm";
 import type { EngineStatus } from "@/lib/webllm";
+import type { ChatSession } from "@/lib/chatHistory";
 
 interface SidebarProps {
   models: WebLLMModel[];
@@ -22,6 +26,21 @@ interface SidebarProps {
   hasMessages: boolean;
   mobileOpen: boolean;
   onCloseMobile: () => void;
+  sessions: ChatSession[];
+  activeSessionId: string | null;
+  onSelectSession: (id: string) => void;
+  onDeleteSession: (id: string) => void;
+}
+
+function relativeTime(ts: number): string {
+  const diff = Date.now() - ts;
+  const minutes = Math.floor(diff / 60_000);
+  const hours = Math.floor(diff / 3_600_000);
+  const days = Math.floor(diff / 86_400_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${days}d ago`;
 }
 
 export function Sidebar({
@@ -35,6 +54,10 @@ export function Sidebar({
   hasMessages,
   mobileOpen,
   onCloseMobile,
+  sessions,
+  activeSessionId,
+  onSelectSession,
+  onDeleteSession,
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -89,126 +112,199 @@ export function Sidebar({
         </button>
 
         <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Logo / Brand */}
-        <div className={`flex items-center gap-2.5 px-4 py-5 border-b border-[#1e1e22] ${collapsed ? "justify-center px-2" : ""}`}>
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#6366f1] to-[#4f46e5]
-            flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
-            <Shield size={14} className="text-white" />
+
+          {/* Logo / Brand */}
+          <div className={`flex items-center gap-2.5 px-4 py-5 border-b border-[#1e1e22] ${collapsed ? "justify-center px-2" : ""}`}>
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#6366f1] to-[#4f46e5]
+              flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
+              <Shield size={14} className="text-white" />
+            </div>
+            {!collapsed && (
+              <div>
+                <p className="text-sm font-semibold text-[#f0f0f2] leading-tight">Vynox AI</p>
+                <p className="text-[10px] text-[#52525b]">Runs in your browser</p>
+              </div>
+            )}
           </div>
+
+          {/* Action Buttons */}
+          <div className={`flex flex-col gap-2 p-3 ${collapsed ? "items-center" : ""}`}>
+            {/* New Chat */}
+            <button
+              id="new-chat-btn"
+              onClick={onNewChat}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium
+                bg-[#6366f1] hover:bg-[#4f46e5] text-white
+                transition-colors duration-150 shadow-sm shadow-indigo-500/20
+                ${collapsed ? "w-10 h-10 justify-center px-0" : "w-full"}`}
+              title="New chat"
+            >
+              <Plus size={15} className="shrink-0" />
+              {!collapsed && <span>New chat</span>}
+            </button>
+
+            {/* Clear current chat */}
+            {hasMessages && !collapsed && (
+              <button
+                id="clear-chat-btn"
+                onClick={onClearChat}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm
+                  text-[#71717a] hover:text-[#f0f0f2] hover:bg-[#1a1a1e]
+                  transition-colors duration-150 w-full"
+              >
+                <Trash2 size={14} className="shrink-0" />
+                <span>Clear conversation</span>
+              </button>
+            )}
+          </div>
+
+          {/* Chat History */}
+          {!collapsed && sessions.length > 0 && (
+            <div className="flex-1 overflow-y-auto px-3 pb-2 min-h-0">
+              <div className="flex items-center gap-1.5 mb-2 px-1">
+                <Clock size={11} className="text-[#52525b]" />
+                <span className="text-[11px] font-medium text-[#52525b] uppercase tracking-wider">History</span>
+              </div>
+
+              <ul className="flex flex-col gap-0.5" role="list" aria-label="Chat history">
+                {sessions.map((session) => {
+                  const isActive = session.id === activeSessionId;
+                  return (
+                    <li key={session.id} className="group relative">
+                      <button
+                        onClick={() => onSelectSession(session.id)}
+                        className={`w-full text-left flex items-start gap-2 px-2 py-2 rounded-lg text-sm
+                          transition-colors duration-100
+                          ${isActive
+                            ? "bg-[#6366f1]/15 text-[#a5b4fc]"
+                            : "text-[#71717a] hover:bg-[#1a1a1e] hover:text-[#d4d4d8]"
+                          }`}
+                        title={session.title}
+                      >
+                        <MessageSquare size={13} className="shrink-0 mt-0.5 opacity-70" />
+                        <span className="flex-1 min-w-0">
+                          <span className="block truncate leading-snug text-[12px] font-medium">
+                            {session.title}
+                          </span>
+                          <span className="block text-[10px] opacity-50 mt-0.5">
+                            {relativeTime(session.updatedAt)}
+                          </span>
+                        </span>
+                      </button>
+
+                      {/* Delete button — visible on hover */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteSession(session.id);
+                        }}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2
+                          opacity-0 group-hover:opacity-100 transition-opacity duration-100
+                          w-6 h-6 rounded-md flex items-center justify-center
+                          text-[#71717a] hover:text-red-400 hover:bg-red-400/10"
+                        title="Delete this conversation"
+                        aria-label="Delete conversation"
+                      >
+                        <X size={11} />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* Collapsed: sessions icon */}
+          {collapsed && sessions.length > 0 && (
+            <div className="flex justify-center py-2">
+              <div
+                title={`${sessions.length} saved conversation${sessions.length !== 1 ? "s" : ""}`}
+                className="w-8 h-8 rounded-lg bg-[#1a1a1e] border border-[#27272a]
+                  flex items-center justify-center cursor-default"
+              >
+                <MessageSquare size={14} className="text-[#71717a]" />
+              </div>
+            </div>
+          )}
+
+          {/* Spacer pushes model picker + footer to bottom */}
+          <div className="flex-1" />
+
+          {/* Model section */}
           {!collapsed && (
-            <div>
-              <p className="text-sm font-semibold text-[#f0f0f2] leading-tight">Vynox AI</p>
-              <p className="text-[10px] text-[#52525b]">Runs in your browser</p>
+            <div className="px-3 pb-3">
+              <div className="flex items-center gap-1.5 mb-2 px-1">
+                <Cpu size={11} className="text-[#52525b]" />
+                <span className="text-[11px] font-medium text-[#52525b] uppercase tracking-wider">Model</span>
+              </div>
+
+              <ModelSelector
+                models={models}
+                selectedModelId={selectedModelId}
+                onSelect={(id) => {
+                  onSelectModel(id);
+                }}
+                disabled={isLoading}
+              />
+
+              <button
+                id="load-model-btn"
+                onClick={onLoadModel}
+                disabled={isLoading || isReady}
+                className={`
+                  mt-2 w-full flex items-center justify-center gap-2
+                  px-3 py-2.5 rounded-lg text-sm font-medium
+                  transition-all duration-150
+                  ${isReady
+                    ? "bg-green-950/30 border border-green-800/40 text-green-400 cursor-default"
+                    : isLoading
+                    ? "bg-[#1a1a1e] border border-[#27272a] text-[#52525b] cursor-not-allowed"
+                    : "bg-[#1a1a1e] border border-[#6366f1]/40 text-[#6366f1] hover:bg-[#6366f1]/10 hover:border-[#6366f1]"
+                  }
+                `}
+              >
+                {isReady ? (
+                  <>✓ Model ready</>
+                ) : isLoading ? (
+                  <><span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-[#52525b] border-t-[#6366f1] rounded-full" /> Loading…</>
+                ) : (
+                  <>Load model</>
+                )}
+              </button>
+            </div>
+          )}
+
+          <InstallButton collapsed={collapsed} />
+
+          {/* Privacy note */}
+          {!collapsed && (
+            <div className="mx-3 mb-3 p-3 rounded-xl bg-[#0d0d0f] border border-[#1e1e22]">
+              <div className="flex items-center gap-2 mb-2">
+                <Shield size={13} className="text-[#6366f1] shrink-0" />
+                <span className="text-xs font-semibold text-[#a1a1aa]">Private by design</span>
+              </div>
+              <ul className="space-y-1 text-[11px] text-[#52525b]">
+                <li>✓ Runs entirely in your browser</li>
+                <li>✓ No data leaves your device</li>
+                <li>✓ No login required</li>
+                <li>✓ No accounts, no tracking</li>
+              </ul>
+            </div>
+          )}
+
+          {/* Collapsed privacy icon */}
+          {collapsed && (
+            <div className="flex justify-center pb-4">
+              <div
+                title="Private by design — no data leaves your device"
+                className="w-8 h-8 rounded-full bg-[#1a1a1e] border border-[#27272a]
+                  flex items-center justify-center cursor-default"
+              >
+                <Shield size={14} className="text-[#6366f1]" />
+              </div>
             </div>
           )}
         </div>
-
-        <div className={`flex flex-col gap-2 p-3 ${collapsed ? "items-center" : ""}`}>
-          {/* New Chat button */}
-          <button
-            id="new-chat-btn"
-            onClick={onNewChat}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium
-              bg-[#6366f1] hover:bg-[#4f46e5] text-white
-              transition-colors duration-150 shadow-sm shadow-indigo-500/20
-              ${collapsed ? "w-10 h-10 justify-center px-0" : "w-full"}`}
-            title="New chat"
-          >
-            <Plus size={15} className="shrink-0" />
-            {!collapsed && <span>New chat</span>}
-          </button>
-
-          {/* Clear chat */}
-          {hasMessages && !collapsed && (
-            <button
-              id="clear-chat-btn"
-              onClick={onClearChat}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm
-                text-[#71717a] hover:text-[#f0f0f2] hover:bg-[#1a1a1e]
-                transition-colors duration-150 w-full"
-            >
-              <Trash2 size={14} className="shrink-0" />
-              <span>Clear conversation</span>
-            </button>
-          )}
-        </div>
-
-        {/* Model section */}
-        {!collapsed && (
-          <div className="px-3 pb-3">
-            <div className="flex items-center gap-1.5 mb-2 px-1">
-              <Cpu size={11} className="text-[#52525b]" />
-              <span className="text-[11px] font-medium text-[#52525b] uppercase tracking-wider">Model</span>
-            </div>
-
-            <ModelSelector
-              models={models}
-              selectedModelId={selectedModelId}
-              onSelect={(id) => {
-                onSelectModel(id);
-              }}
-              disabled={isLoading}
-            />
-
-            <button
-              id="load-model-btn"
-              onClick={onLoadModel}
-              disabled={isLoading || isReady}
-              className={`
-                mt-2 w-full flex items-center justify-center gap-2
-                px-3 py-2.5 rounded-lg text-sm font-medium
-                transition-all duration-150
-                ${isReady
-                  ? "bg-green-950/30 border border-green-800/40 text-green-400 cursor-default"
-                  : isLoading
-                  ? "bg-[#1a1a1e] border border-[#27272a] text-[#52525b] cursor-not-allowed"
-                  : "bg-[#1a1a1e] border border-[#6366f1]/40 text-[#6366f1] hover:bg-[#6366f1]/10 hover:border-[#6366f1]"
-                }
-              `}
-            >
-              {isReady ? (
-                <>✓ Model ready</>
-              ) : isLoading ? (
-                <><span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-[#52525b] border-t-[#6366f1] rounded-full" /> Loading…</>
-              ) : (
-                <>Load model</>
-              )}
-            </button>
-          </div>
-        )}
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        <InstallButton collapsed={collapsed} />
-
-        {/* Privacy note */}
-        {!collapsed && (
-          <div className="mx-3 mb-3 p-3 rounded-xl bg-[#0d0d0f] border border-[#1e1e22]">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield size={13} className="text-[#6366f1] shrink-0" />
-              <span className="text-xs font-semibold text-[#a1a1aa]">Private by design</span>
-            </div>
-            <ul className="space-y-1 text-[11px] text-[#52525b]">
-              <li>✓ Runs entirely in your browser</li>
-              <li>✓ No data leaves your device</li>
-              <li>✓ No login required</li>
-              <li>✓ No accounts, no tracking</li>
-            </ul>
-          </div>
-        )}
-
-        {/* Collapsed privacy icon */}
-        {collapsed && (
-          <div className="flex justify-center pb-4">
-            <div title="Private by design — no data leaves your device"
-              className="w-8 h-8 rounded-full bg-[#1a1a1e] border border-[#27272a]
-                flex items-center justify-center cursor-default">
-              <Shield size={14} className="text-[#6366f1]" />
-            </div>
-          </div>
-        )}
-      </div>
       </aside>
     </>
   );
