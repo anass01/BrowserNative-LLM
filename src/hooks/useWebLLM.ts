@@ -40,11 +40,21 @@ export function useWebLLM(): UseWebLLMReturn {
 
   // Load model list on mount
   useEffect(() => {
-    import("@/lib/webllm").then(({ getModelList }) => {
+    import("@/lib/webllm").then(({ getModelList, getDeviceMemory }) => {
+      const memoryGb = getDeviceMemory();
+      
       getModelList().then((list) => {
         // Sort: featured first, then alphabetical
         const featured = list.filter((m) => FEATURED_MODELS.includes(m.model_id));
         const others = list.filter((m) => !FEATURED_MODELS.includes(m.model_id));
+        
+        // If memory is low (< 8GB), we should probably default to a smaller model
+        if (memoryGb !== null && memoryGb < 8) {
+          const smallModels = ["Llama-3.2-3B-Instruct-q4f32_1-MLC", "SmolLM2-1.7B-Instruct-q4f16_1-MLC", "Phi-3.5-mini-instruct-q4f16_1-MLC"];
+          const found = smallModels.find(id => list.some(m => m.model_id === id));
+          if (found) setSelectedModelId(found);
+        }
+
         setModels([...featured, ...others]);
       });
     });

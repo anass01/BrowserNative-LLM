@@ -5,7 +5,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Cpu, Check } from "lucide-react";
+import { ChevronDown, Cpu, Check, AlertTriangle } from "lucide-react";
 import type { WebLLMModel } from "@/lib/webllm";
 
 interface ModelSelectorProps {
@@ -96,6 +96,9 @@ export function ModelSelector({ models, selectedModelId, onSelect, disabled }: M
                 className={`shrink-0 transition-opacity ${model.model_id === selectedModelId ? "opacity-100 text-[#6366f1]" : "opacity-0"}`}
               />
               <span className="flex-1 truncate">{formatName(model.model_id)}</span>
+              {(model as any).vram_required_MB > 4096 && (
+                <AlertTriangle size={12} className="text-amber-500 shrink-0" title="Heavy model - may crash on low memory" />
+              )}
               <span className="text-xs text-[#3f3f46] shrink-0">{formatSize(model)}</span>
             </button>
           ))}

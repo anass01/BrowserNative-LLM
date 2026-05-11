@@ -105,7 +105,7 @@ export async function streamChat(
   try {
     await engine.interruptGenerate();
   } catch {
-    /* ignore if nothing to interrupt */
+    /* ignore */
   }
 
   const completion = await engine.chat.completions.create({
@@ -115,29 +115,41 @@ export async function streamChat(
     max_tokens: 2048,
   });
 
+  let hasAborted = false;
+
   try {
     for await (const chunk of completion) {
-      if (signal?.aborted) {
-        // Tell WebLLM to stop generating and release its lock
+      if (signal?.aborted && !hasAborted) {
+        hasAborted = true;
+        // Tell WebLLM to stop generating immediately
         try {
           await engine?.interruptGenerate();
         } catch {
           /* ignore */
         }
-        return;
+        // We DON'T return here. We let the loop finish to drain the generator.
       }
-      const content = chunk.choices[0]?.delta?.content ?? "";
-      const done = chunk.choices[0]?.finish_reason != null;
-      // Always call onChunk — including the final done=true chunk
-      onChunk(content, done);
-      // Do NOT break here. Let the for-await run to natural completion
-      // so WebLLM fully closes its internal stream state.
+
+      if (!hasAborted) {
+        const content = chunk.choices[0]?.delta?.content ?? "";
+        const done = chunk.choices[0]?.finish_reason != null;
+        onChunk(content, done);
+      }
     }
   } catch (err) {
-    // If the signal was aborted, ignore the error (interruptGenerate may throw)
-    if (signal?.aborted) return;
+    if (signal?.aborted || hasAborted) return;
     throw err;
   }
+}
+
+/**
+ * Returns the system memory in GB, or null if unavailable.
+ */
+export function getDeviceMemory(): number | null {
+  if (typeof navigator !== "undefined" && "deviceMemory" in navigator) {
+    return (navigator as any).deviceMemory;
+  }
+  return null;
 }
 
 export function isEngineLoaded() {

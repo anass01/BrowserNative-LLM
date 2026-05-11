@@ -139,6 +139,16 @@ export function useChat(engineStatus: EngineStatus): UseChatReturn {
       setActiveSessionId(sid);
     }
 
+    // Build history IMMEDIATELY to capture current state correctly
+    const history = [
+      { role: "system" as const, content: SYSTEM_PROMPT },
+      ...messagesRef.current.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      })),
+      { role: "user" as const, content: text.trim() },
+    ];
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
@@ -159,20 +169,11 @@ export function useChat(engineStatus: EngineStatus): UseChatReturn {
     const abort = new AbortController();
     abortRef.current = abort;
 
-    // Yield to React so the UI updates before heavy WebGPU work begins
-    setTimeout(async () => {
+    // Use a microtask instead of a 100ms timeout to avoid race conditions
+    // while still letting React perform the initial render of the new messages
+    Promise.resolve().then(async () => {
       try {
         const { streamChat } = await import("@/lib/webllm");
-
-        // Build history from latest ref to avoid stale closure issues
-        const history = [
-          { role: "system" as const, content: SYSTEM_PROMPT },
-          ...messagesRef.current.map((m) => ({
-            role: m.role as "user" | "assistant",
-            content: m.content,
-          })),
-          { role: "user" as const, content: userMessage.content },
-        ];
 
         await streamChat(
           history,
@@ -190,6 +191,7 @@ export function useChat(engineStatus: EngineStatus): UseChatReturn {
         );
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
+          console.error("Chat error:", err);
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantMessage.id
@@ -210,7 +212,7 @@ export function useChat(engineStatus: EngineStatus): UseChatReturn {
           scheduleCompression();
         }
       }
-    }, 100);
+    });
   }, [engineStatus, persistMessages, scheduleCompression]);
 
   // ─── Controls ───────────────────────────────────────────────────────────
