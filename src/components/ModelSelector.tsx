@@ -97,7 +97,9 @@ export function ModelSelector({ models, selectedModelId, onSelect, disabled }: M
               />
               <span className="flex-1 truncate">{formatName(model.model_id)}</span>
               {(model as any).vram_required_MB > 4096 && (
-                <AlertTriangle size={12} className="text-amber-500 shrink-0" title="Heavy model - may crash on low memory" />
+                <span title="Heavy model - may crash on low memory">
+                  <AlertTriangle size={12} className="text-amber-500 shrink-0" />
+                </span>
               )}
               <span className="text-xs text-[#3f3f46] shrink-0">{formatSize(model)}</span>
             </button>
